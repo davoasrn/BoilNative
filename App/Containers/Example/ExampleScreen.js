@@ -1,9 +1,8 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Platform, Text, View, Button, ActivityIndicator, Image } from 'react-native'
-import { connect } from 'react-redux'
-import { PropTypes } from 'prop-types'
 import ExampleActions from 'App/Stores/Example/Actions'
-import { liveInEurope } from 'App/Stores/Example/Selectors'
+import { user, userIsLoadingSel, userErrorMessageSel, liveInEuropeSel } from 'App/Stores/Example/Selectors'
 import Style from './ExampleScreenStyle'
 import { Images } from 'App/Theme'
 
@@ -19,68 +18,50 @@ const instructions = Platform.select({
   android: 'Double tap R on your keyboard to reload,\nShake or press menu button for dev menu.',
 })
 
-class ExampleScreen extends React.Component {
-  componentDidMount() {
-    this._fetchUser()
-  }
+export default () => {
+  const dispatch = useDispatch();
 
-  render() {
-    return (
-      <View style={Style.container}>
-        {this.props.userIsLoading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
-        ) : (
-          <View>
-            <View style={Style.logoContainer}>
-              <Image style={Style.logo} source={Images.logo} resizeMode={'contain'} />
-            </View>
-            <Text style={Style.text}>To get started, edit App.js</Text>
-            <Text style={Style.instructions}>{instructions}</Text>
-            {this.props.userErrorMessage ? (
-              <Text style={Style.error}>{this.props.userErrorMessage}</Text>
-            ) : (
-              <View>
-                <Text style={Style.result}>
-                  {"I'm a fake user, my name is "}
-                  {this.props.user.name}
-                </Text>
-                <Text style={Style.result}>
-                  {this.props.liveInEurope ? 'I live in Europe !' : "I don't live in Europe."}
-                </Text>
-              </View>
-            )}
-            <Button onPress={() => this._fetchUser()} title="Refresh" />
+  useEffect(() => {
+    dispatch(ExampleActions.fetchUser());
+  }, [dispatch]);
+
+  _fetchUser = () => {
+    dispatch(ExampleActions.fetchUser());
+  };
+
+  const userData = useSelector(user);
+  const userIsLoading = useSelector(userIsLoadingSel);
+  const userErrorMessage = useSelector(userErrorMessageSel);
+  const liveInEurope = useSelector(liveInEuropeSel);
+
+  return (
+    <View style={Style.container}>
+      {userIsLoading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <View>
+          <View style={Style.logoContainer}>
+            <Image style={Style.logo} source={Images.logo} resizeMode={'contain'} />
           </View>
-        )}
-      </View>
-    )
-  }
-  
-  _fetchUser() {
-    this.props.fetchUser()
-  }
+          <Text style={Style.text}>To get started, edit App.js</Text>
+          <Text style={Style.instructions}>{instructions}</Text>
+          {userErrorMessage ? (
+            <Text style={Style.error}>{userErrorMessage}</Text>
+          ) : (
+            <View>
+              <Text style={Style.result}>
+                {"I'm a fake user, my name is "}
+                {userData.name}
+              </Text>
+              <Text style={Style.result}>
+                {liveInEurope ? 'I live in Europe !' : "I don't live in Europe."}
+              </Text>
+            </View>
+          )}
+          <Button onPress={() => this._fetchUser()} title="Refresh" />
+        </View>
+      )}
+    </View>
+  )
+
 }
-
-ExampleScreen.propTypes = {
-  user: PropTypes.object,
-  userIsLoading: PropTypes.bool,
-  userErrorMessage: PropTypes.string,
-  fetchUser: PropTypes.func,
-  liveInEurope: PropTypes.bool,
-}
-
-const mapStateToProps = (state) => ({
-  user: state.example.user,
-  userIsLoading: state.example.userIsLoading,
-  userErrorMessage: state.example.userErrorMessage,
-  liveInEurope: liveInEurope(state),
-})
-
-const mapDispatchToProps = (dispatch) => ({
-  fetchUser: () => dispatch(ExampleActions.fetchUser()),
-})
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(ExampleScreen)
